@@ -14,9 +14,14 @@ const Diagram = ({ nodeDataArray, linkDataArray, onNodeSelect, onModelChange }) 
         diagramRef.current,
         {
           "undoManager.isEnabled": true,
-          click: function (e, obj) {
+          click: function (e) {
+            const part = e.subject.part;
             if (onNodeSelect) {
-              onNodeSelect(obj.part.data);
+              if (part) {
+                onNodeSelect(part.data);
+              } else {
+                onNodeSelect(null);
+              }
             }
           },
         }
@@ -72,8 +77,11 @@ const Diagram = ({ nodeDataArray, linkDataArray, onNodeSelect, onModelChange }) 
       // Define the link template
       diagramInstance.current.linkTemplate = $(
         go.Link,
-        $(go.Shape),
-        $(go.Shape, { toArrow: "Standard" })
+        { routing: go.Link.Orthogonal, corner: 5, relinkableFrom: true, relinkableTo: true },
+        $(go.Shape, { strokeWidth: 2, stroke: "gray" }),
+        $(go.Shape, { toArrow: "OpenTriangle", stroke: "gray" }),
+        $(go.TextBlock, new go.Binding("text", "fromCardinality"), { segmentIndex: 0, segmentOffset: new go.Point(-10, -10) }),
+        $(go.TextBlock, new go.Binding("text", "toCardinality"), { segmentIndex: -1, segmentOffset: new go.Point(10, 10) })
       );
 
       // Initialize the diagram model

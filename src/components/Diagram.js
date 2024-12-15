@@ -5,6 +5,12 @@ const Diagram = ({ nodeDataArray, linkDataArray, onNodeSelect, onModelChange }) 
   const diagramRef = useRef(null);
   const diagramInstance = useRef(null);
 
+  const handleSelectionChange = (node) => {
+    if (onNodeSelect && node) {
+      onNodeSelect(node.data);
+    }
+  };
+
   useEffect(() => {
     if (!diagramInstance.current) {
       const $ = go.GraphObject.make;
@@ -36,7 +42,16 @@ const Diagram = ({ nodeDataArray, linkDataArray, onNodeSelect, onModelChange }) 
         $(
           go.Panel,
           "Table",
-          $(go.TextBlock, { row: 0, font: "bold 14px Arial", margin: 5, editable: true }, new go.Binding("text", "className")),
+          $(
+            go.TextBlock,
+            { 
+              row: 0, 
+              font: "bold 14px Arial", 
+              margin: 5, 
+              editable: true 
+            },
+            new go.Binding("text", "className")
+          ),
           $(
             go.TextBlock,
             { row: 1, font: "italic 12px Arial", margin: 5 },
@@ -68,7 +83,12 @@ const Diagram = ({ nodeDataArray, linkDataArray, onNodeSelect, onModelChange }) 
               isMultiline: true,
             },
             new go.Binding("text", "methods", (methods) =>
-              methods.map((method) => `${method.visibility} ${method.name}(): ${method.returnType}`).join("\n")
+              methods.map((method) => {
+                const args = method.args && method.args.length > 0 
+                  ? method.args.join(", ")
+                  : "";
+                return `${method.visibility} ${method.name}(${args}): ${method.returnType}`;
+              }).join("\n")
             )
           )
         )
@@ -77,11 +97,46 @@ const Diagram = ({ nodeDataArray, linkDataArray, onNodeSelect, onModelChange }) 
       // Define the link template
       diagramInstance.current.linkTemplate = $(
         go.Link,
-        { routing: go.Link.Orthogonal, corner: 5, relinkableFrom: true, relinkableTo: true },
-        $(go.Shape, { strokeWidth: 2, stroke: "gray" }),
-        $(go.Shape, { toArrow: "OpenTriangle", stroke: "gray" }),
-        $(go.TextBlock, new go.Binding("text", "fromCardinality"), { segmentIndex: 0, segmentOffset: new go.Point(-10, -10) }),
-        $(go.TextBlock, new go.Binding("text", "toCardinality"), { segmentIndex: -1, segmentOffset: new go.Point(10, 10) })
+        { routing: go.Link.Orthogonal, corner: 5 },
+        $(
+          go.Shape,
+          { 
+            strokeWidth: 2,
+          },
+          new go.Binding("stroke", "stroke"),
+          new go.Binding("strokeDashArray", "strokeDashArray")
+        ),
+        $(
+          go.Shape,
+          { 
+            toArrow: "Standard",
+            scale: 1,
+            width: 10,
+            height: 10
+          },
+          new go.Binding("toArrow", "toArrow"),
+          new go.Binding("fromArrow", "fromArrow"),
+          new go.Binding("fill", "fill"),
+          new go.Binding("stroke", "stroke")
+        ),
+        $(
+          go.TextBlock,
+          {
+            segmentIndex: 0,
+            segmentOffset: new go.Point(-30, -10),
+            font: "10pt Arial"
+          },
+          new go.Binding("text", "fromCardinality")
+        ),
+        $(
+          go.TextBlock,
+          {
+            segmentIndex: -1,
+            segmentOffset: new go.Point(30, -10),
+            font: "10pt Arial"
+          },
+          new go.Binding("text", "toCardinality")
+        )
       );
 
       // Initialize the diagram model
@@ -95,12 +150,6 @@ const Diagram = ({ nodeDataArray, linkDataArray, onNodeSelect, onModelChange }) 
       });
     }
   }, [nodeDataArray, linkDataArray, onModelChange, onNodeSelect]);
-
-  const handleSelectionChange = (node) => {
-    if (onNodeSelect && node) {
-      onNodeSelect(node.data);
-    }
-  };
 
   useEffect(() => {
     if (diagramInstance.current) {

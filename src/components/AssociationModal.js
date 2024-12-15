@@ -1,138 +1,205 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
 const AssociationModal = ({ isOpen, onClose, nodeDataArray, onSave }) => {
-  const [fromClass, setFromClass] = useState('');
-  const [toClass, setToClass] = useState('');
-  const [fromCardinality, setFromCardinality] = useState('');
-  const [toCardinality, setToCardinality] = useState('');
-  const [associationType, setAssociationType] = useState('Association');
+  const [fromClass, setFromClass] = useState("");
+  const [toClass, setToClass] = useState("");
+  const [fromCardinality, setFromCardinality] = useState("");
+  const [toCardinality, setToCardinality] = useState("");
+  const [associationType, setAssociationType] = useState("");
 
-  const associationTypes = ['Association', 'Inheritance', 'Aggregation', 'Composition', 'Reflexive'];
-  const cardinalityOptions = ['1', '0..1', '1..*', '*'];
+  const cardinalityOptions = ["1..*", "0..1", "1..1", "0..*", "*"];
+  
+  const associationTypes = [
+    { value: "Association", label: "Association simple" },
+    { value: "Aggregation", label: "Agrégation" },
+    { value: "Composition", label: "Composition" },
+    { value: "Generalization", label: "Généralisation" },
+    { value: "Dependency", label: "Dépendance" },
+  ];
 
   if (!isOpen) return null;
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (fromClass && toClass && fromCardinality && toCardinality && associationType) {
-      if (fromClass === toClass) {
-        alert('The From Class and To Class must be different.');
-        return;
+      // Create the base link object
+      const linkData = {
+        from: parseInt(fromClass),
+        to: parseInt(toClass),
+        fromCardinality,
+        toCardinality,
+      };
+
+      // Add specific properties based on association type
+      switch (associationType) {
+        case "Aggregation":
+          linkData.type = "Aggregation";
+          linkData.fromArrow = "Diamond";
+          linkData.fill = "white";
+          linkData.stroke = "black";
+          break;
+        case "Composition":
+          linkData.type = "Composition";
+          linkData.fromArrow = "Diamond";
+          linkData.fill = "black";
+          linkData.stroke = "black";
+          break;
+        case "Generalization":
+          linkData.type = "Generalization";
+          linkData.toArrow = "Triangle";
+          linkData.stroke = "black";
+          break;
+        case "Dependency":
+          linkData.type = "Dependency";
+          linkData.toArrow = "OpenTriangle";
+          linkData.stroke = "black";
+          linkData.strokeDashArray = [6, 2];
+          break;
+        default: // Association
+          linkData.type = "Association";
+          linkData.stroke = "black";
+          break;
       }
-      onSave(fromClass, toClass, fromCardinality, toCardinality, associationType);
-      setFromClass('');
-      setToClass('');
-      setFromCardinality('');
-      setToCardinality('');
-      setAssociationType('Association');
+
+      onSave(linkData);
+      // Reset form fields
+      setFromClass("");
+      setToClass("");
+      setFromCardinality("");
+      setToCardinality("");
+      setAssociationType("");
     } else {
-      alert('Please fill in all fields.');
+      alert("Veuillez remplir tous les champs.");
     }
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-white p-5 rounded shadow-lg w-96">
-        <h2 className="text-lg font-bold mb-4">Create Association</h2>
-        <form onSubmit={handleSubmit}>
-          {/* From Class */}
-          <div className="mb-4">
-            <label className="block text-gray-700">From Class:</label>
-            <select
-              value={fromClass}
-              onChange={(e) => setFromClass(e.target.value)}
-              className="border rounded p-2 w-full"
-            >
-              <option value="">Select a class</option>
-              {nodeDataArray.map((classItem) => (
-                <option key={classItem.key} value={classItem.key}>
-                  {classItem.className}
-                </option>
-              ))}
-            </select>
-          </div>
+      <div className="bg-white p-8 rounded-lg shadow-lg w-[500px] max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-800">Créer une Association</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
 
-          {/* To Class */}
-          <div className="mb-4">
-            <label className="block text-gray-700">To Class:</label>
-            <select
-              value={toClass}
-              onChange={(e) => setToClass(e.target.value)}
-              className="border rounded p-2 w-full"
-            >
-              <option value="">Select a class</option>
-              {nodeDataArray.map((classItem) => (
-                <option key={classItem.key} value={classItem.key}>
-                  {classItem.className}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* From Cardinality */}
-          <div className="mb-4">
-            <label className="block text-gray-700">Cardinality for From Class:</label>
-            <select
-              value={fromCardinality}
-              onChange={(e) => setFromCardinality(e.target.value)}
-              className="border rounded p-2 w-full"
-            >
-              <option value="">Select cardinality</option>
-              {cardinalityOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* To Cardinality */}
-          <div className="mb-4">
-            <label className="block text-gray-700">Cardinality for To Class:</label>
-            <select
-              value={toCardinality}
-              onChange={(e) => setToCardinality(e.target.value)}
-              className="border rounded p-2 w-full"
-            >
-              <option value="">Select cardinality</option>
-              {cardinalityOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Association Type */}
-          <div className="mb-4">
-            <label className="block text-gray-700">Type of Association:</label>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Type d'association */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Type d'association
+            </label>
             <select
               value={associationType}
               onChange={(e) => setAssociationType(e.target.value)}
-              className="border rounded p-2 w-full"
+              className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
             >
+              <option value="">Sélectionner un type</option>
               {associationTypes.map((type) => (
-                <option key={type} value={type}>
-                  {type}
+                <option key={type.value} value={type.value}>
+                  {type.label}
                 </option>
               ))}
             </select>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex justify-between">
+          {/* Classes */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Classe source
+              </label>
+              <select
+                value={fromClass}
+                onChange={(e) => setFromClass(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">Sélectionner une classe</option>
+                {nodeDataArray.map((classItem) => (
+                  <option key={classItem.key} value={classItem.key}>
+                    {classItem.className}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Classe cible
+              </label>
+              <select
+                value={toClass}
+                onChange={(e) => setToClass(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">Sélectionner une classe</option>
+                {nodeDataArray.map((classItem) => (
+                  <option key={classItem.key} value={classItem.key}>
+                    {classItem.className}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Cardinalités */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Cardinalité source
+              </label>
+              <select
+                value={fromCardinality}
+                onChange={(e) => setFromCardinality(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">Sélectionner une cardinalité</option>
+                {cardinalityOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Cardinalité cible
+              </label>
+              <select
+                value={toCardinality}
+                onChange={(e) => setToCardinality(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">Sélectionner une cardinalité</option>
+                {cardinalityOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex justify-end space-x-4 pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="bg-gray-300 hover:bg-gray-400 text-black py-1 px-4 rounded"
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
             >
-              Cancel
+              Annuler
             </button>
             <button
               type="submit"
-              className="bg-blue-500 hover:bg-blue-600 text-white py-1 px-4 rounded"
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
-              Save Association
+              Créer l'association
             </button>
           </div>
         </form>

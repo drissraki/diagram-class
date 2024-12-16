@@ -13,21 +13,22 @@ const AssociationModal = ({ isOpen, onClose, nodeDataArray, onSave }) => {
     { value: "Association", label: "Association simple" },
     { value: "Aggregation", label: "Agrégation" },
     { value: "Composition", label: "Composition" },
-    { value: "Generalization", label: "Généralisation" },
-    { value: "Dependency", label: "Dépendance" },
+    { value: "inheritance", label: "inheritance" },
+    
   ];
 
   if (!isOpen) return null;
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (fromClass && toClass && fromCardinality && toCardinality && associationType) {
+    if (fromClass && toClass && associationType) {
       // Create the base link object
       const linkData = {
         from: parseInt(fromClass),
         to: parseInt(toClass),
-        fromCardinality,
-        toCardinality,
+        fromCardinality: fromCardinality || '',
+        toCardinality: toCardinality || '',
+        relationshipType: associationType
       };
 
       // Add specific properties based on association type
@@ -44,8 +45,9 @@ const AssociationModal = ({ isOpen, onClose, nodeDataArray, onSave }) => {
           linkData.fill = "black";
           linkData.stroke = "black";
           break;
-        case "Generalization":
-          linkData.type = "Generalization";
+        case "inheritance":
+          linkData.type = "inheritance";
+          linkData.relationshipType = "inheritance";
           linkData.toArrow = "Triangle";
           linkData.stroke = "black";
           break;
@@ -69,7 +71,7 @@ const AssociationModal = ({ isOpen, onClose, nodeDataArray, onSave }) => {
       setToCardinality("");
       setAssociationType("");
     } else {
-      alert("Veuillez remplir tous les champs.");
+      alert("Veuillez sélectionner les classes et le type d'association.");
     }
   };
 

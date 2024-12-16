@@ -1,18 +1,37 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Diagram from "../components/Diagram";
 import ClassEditor from "../components/ClassEditor";
 import AssociationModal from "../components/AssociationModal";
+import JavaCodeModal from "../components/JavaCodeModal";
 
 const ClassDiagramPage = () => {
-  const [nodeDataArray, setNodeDataArray] = useState([
-    { key: 1, className: "Class1", attributes: [], methods: [] },
-    { key: 2, className: "Class2", attributes: [], methods: [] },
-  ]);
-  const [linkDataArray, setLinkDataArray] = useState([]);
+  // Initialize state from localStorage or use default values
+  const [nodeDataArray, setNodeDataArray] = useState(() => {
+    const saved = localStorage.getItem('umlNodeData');
+    return saved ? JSON.parse(saved) : [
+      { key: 1, className: "Class1", attributes: [], methods: [] },
+      { key: 2, className: "Class2", attributes: [], methods: [] },
+    ];
+  });
+
+  const [linkDataArray, setLinkDataArray] = useState(() => {
+    const saved = localStorage.getItem('umlLinkData');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   const [selectedNode, setSelectedNode] = useState(null);
-  const [isModalOpen, setModalOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
+  const [generatedCode, setGeneratedCode] = useState('');
+  const [isJavaModalOpen, setIsJavaModalOpen] = useState(false);
+  const [isModalOpen, setModalOpen] = useState(false);
+  const diagramRef = useRef(null);
+
+  // Save to localStorage whenever data changes
+  useEffect(() => {
+    localStorage.setItem('umlNodeData', JSON.stringify(nodeDataArray));
+    localStorage.setItem('umlLinkData', JSON.stringify(linkDataArray));
+  }, [nodeDataArray, linkDataArray]);
 
   const showMessage = (text, type = "error") => {
     setMessage(text);
@@ -223,27 +242,42 @@ const ClassDiagramPage = () => {
     }
 
     setLinkDataArray(prev => [...prev, linkData]);
-    setModalOpen(false);
     showMessage("Association created successfully!", "success");
+  };
+
+  // Add clear diagram functionality
+  const handleClearDiagram = () => {
+    if (window.confirm("Are you sure you want to clear the entire diagram? This action cannot be undone.")) {
+      setNodeDataArray([]);
+      setLinkDataArray([]);
+      setSelectedNode(null);
+      localStorage.removeItem('umlNodeData');
+      localStorage.removeItem('umlLinkData');
+      showMessage("Diagram cleared successfully!", "success");
+    }
+  };
+
+  const getDiagramInstance = () => {
+    return diagramRef.current?.getDiagram();
   };
 
   return (
     <div className="flex flex-col h-screen">
-      <nav className="bg-blue-600 text-white p-4">
+      <nav className="bg-blue-600 text-white p-4 shadow-md">
         <h1 className="text-lg font-bold">UML Class Diagram Editor</h1>
       </nav>
 
       {message && (
-        <div className={`p-4 ${
+        <div className={`p-2 ${
           messageType === "success" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
         }`}>
           {message}
         </div>
       )}
 
-      <div className="flex-grow flex">
-        <div className="w-2/3 p-4">
-          <div className="mb-4 flex space-x-4">
+      <div className="flex flex-1 overflow-hidden">
+        <div className="w-2/3 flex flex-col p-4">
+          <div className="flex space-x-4 mb-4">
             <button
               className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded"
               onClick={handleAddClass}
@@ -262,16 +296,30 @@ const ClassDiagramPage = () => {
             >
               Add Association
             </button>
+            <button
+              className="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded"
+              onClick={handleClearDiagram}
+            >
+              Clear Diagram
+            </button>
+            <JavaCodeModal 
+              getDiagramInstance={getDiagramInstance}
+              setGeneratedCode={setGeneratedCode}
+              setIsModalOpen={setIsJavaModalOpen}
+            />
           </div>
-          <Diagram
-            nodeDataArray={nodeDataArray}
-            linkDataArray={linkDataArray}
-            onNodeSelect={setSelectedNode}
-            selectedNode={selectedNode}
-          />
+          <div className="flex-1">
+            <Diagram
+              ref={diagramRef}
+              nodeDataArray={nodeDataArray}
+              linkDataArray={linkDataArray}
+              onNodeSelect={setSelectedNode}
+              selectedNode={selectedNode}
+            />
+          </div>
         </div>
 
-        <div className="w-1/3 p-4 border-l">
+        <div className="w-1/3 p-4 border-l overflow-y-auto">
           {selectedNode ? (
             <ClassEditor
               selectedNode={selectedNode}
@@ -292,6 +340,38 @@ const ClassDiagramPage = () => {
           nodeDataArray={nodeDataArray}
           onSave={handleSaveAssociation}
         />
+      )}
+
+      {isJavaModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-start justify-center p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-6xl mt-20 shadow-xl">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Generated Java Code</h2>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => {
+                    navigator.clipboard.writeText(generatedCode);
+                    showMessage("Code copied to clipboard!", "success");
+                  }}
+                  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
+                >
+                  Copy Code
+                </button>
+                <button 
+                  onClick={() => setIsJavaModalOpen(false)}
+                  className="text-gray-500 hover:text-gray-700 text-xl"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            <div className="max-h-[70vh] overflow-auto">
+              <pre className="bg-gray-100 p-4 rounded text-sm font-mono whitespace-pre-wrap">
+                <code>{generatedCode}</code>
+              </pre>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

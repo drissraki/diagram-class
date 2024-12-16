@@ -224,25 +224,33 @@ const ClassDiagramPage = () => {
     return true;
   };
 
-  const handleSaveAssociation = (linkData) => {
-    if (linkData.from === linkData.to) {
-      showMessage("An association cannot link a class to itself.");
-      return;
+  const handleSaveAssociation = (firstLink, secondLink, junctionClass) => {
+    if (junctionClass) {
+      // Handle many-to-many relationship
+      setNodeDataArray(prev => [...prev, junctionClass]);
+      setLinkDataArray(prev => [...prev, firstLink, secondLink]);
+      showMessage("Association many-to-many créée avec succès!", "success");
+    } else {
+      // Handle regular association
+      if (firstLink.from === firstLink.to) {
+        showMessage("Une association ne peut pas lier une classe à elle-même.");
+        return;
+      }
+
+      const isDuplicate = linkDataArray.some(
+        link =>
+          (link.from === firstLink.from && link.to === firstLink.to) ||
+          (link.from === firstLink.to && link.to === firstLink.from)
+      );
+
+      if (isDuplicate) {
+        showMessage("Cette association existe déjà.");
+        return;
+      }
+
+      setLinkDataArray(prev => [...prev, firstLink]);
+      showMessage("Association créée avec succès!", "success");
     }
-
-    const isDuplicate = linkDataArray.some(
-      link =>
-        (link.from === linkData.from && link.to === linkData.to) ||
-        (link.from === linkData.to && link.to === linkData.from)
-    );
-
-    if (isDuplicate) {
-      showMessage("This association already exists.");
-      return;
-    }
-
-    setLinkDataArray(prev => [...prev, linkData]);
-    showMessage("Association created successfully!", "success");
   };
 
   // Add clear diagram functionality

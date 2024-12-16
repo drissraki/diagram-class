@@ -13,8 +13,7 @@ const AssociationModal = ({ isOpen, onClose, nodeDataArray, onSave }) => {
     { value: "Association", label: "Association simple" },
     { value: "Aggregation", label: "Agrégation" },
     { value: "Composition", label: "Composition" },
-    { value: "inheritance", label: "inheritance" },
-    
+    { value: "Generalization", label: "Généralisation" }
   ];
 
   if (!isOpen) return null;
@@ -22,48 +21,86 @@ const AssociationModal = ({ isOpen, onClose, nodeDataArray, onSave }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (fromClass && toClass && associationType) {
-      // Create the base link object
-      const linkData = {
-        from: parseInt(fromClass),
-        to: parseInt(toClass),
-        fromCardinality: fromCardinality || '',
-        toCardinality: toCardinality || '',
-        relationshipType: associationType
-      };
+      // Check if it's a many-to-many relationship
+      const isManyToMany = fromCardinality === '*' && toCardinality === '*';
+      
+      if (isManyToMany && associationType === "Association") {
+        // Create the junction class
+        const fromClassName = nodeDataArray.find(node => node.key === parseInt(fromClass))?.className;
+        const toClassName = nodeDataArray.find(node => node.key === parseInt(toClass))?.className;
+        const junctionClassName = `${fromClassName}${toClassName}`;
+        
+        // Create junction class node
+        const junctionClass = {
+          key: Date.now(),
+          className: junctionClassName,
+          attributes: [],
+          methods: []
+        };
 
-      // Add specific properties based on association type
-      switch (associationType) {
-        case "Aggregation":
-          linkData.type = "Aggregation";
-          linkData.fromArrow = "Diamond";
-          linkData.fill = "white";
-          linkData.stroke = "black";
-          break;
-        case "Composition":
-          linkData.type = "Composition";
-          linkData.fromArrow = "Diamond";
-          linkData.fill = "black";
-          linkData.stroke = "black";
-          break;
-        case "inheritance":
-          linkData.type = "inheritance";
-          linkData.relationshipType = "inheritance";
-          linkData.toArrow = "Triangle";
-          linkData.stroke = "black";
-          break;
-        case "Dependency":
-          linkData.type = "Dependency";
-          linkData.toArrow = "OpenTriangle";
-          linkData.stroke = "black";
-          linkData.strokeDashArray = [6, 2];
-          break;
-        default: // Association
-          linkData.type = "Association";
-          linkData.stroke = "black";
-          break;
+        // Create two one-to-many associations
+        const firstLink = {
+          from: parseInt(fromClass),
+          to: junctionClass.key,
+          fromCardinality: '1',
+          toCardinality: '*',
+          type: "Association",
+          toArrow: "Triangle",
+          stroke: "black"
+        };
+
+        const secondLink = {
+          from: junctionClass.key,
+          to: parseInt(toClass),
+          fromCardinality: '*',
+          toCardinality: '1',
+          type: "Association",
+          toArrow: "Triangle",
+          stroke: "black"
+        };
+
+        // Save all the new elements
+        onSave(firstLink, secondLink, junctionClass);
+      } else {
+        // Regular association handling
+        const linkData = {
+          from: parseInt(fromClass),
+          to: parseInt(toClass),
+          fromCardinality: fromCardinality || '',
+          toCardinality: toCardinality || '',
+          relationshipType: associationType
+        };
+
+        // Add specific properties based on association type
+        switch (associationType) {
+          case "Aggregation":
+            linkData.type = "Aggregation";
+            linkData.fromArrow = "Diamond";
+            linkData.fill = "white";
+            linkData.stroke = "black";
+            break;
+          case "Composition":
+            linkData.type = "Composition";
+            linkData.fromArrow = "Diamond";
+            linkData.fill = "black";
+            linkData.stroke = "black";
+            break;
+          case "Generalization":
+            linkData.type = "Generalization";
+            linkData.toArrow = "Triangle";
+            linkData.stroke = "black";
+            linkData.relationshipType = "inheritance";
+            break;
+          default: // Association
+            linkData.type = "Association";
+            linkData.toArrow = "Triangle";
+            linkData.stroke = "black";
+            break;
+        }
+
+        onSave(linkData);
       }
 
-      onSave(linkData);
       // Reset form fields
       setFromClass("");
       setToClass("");

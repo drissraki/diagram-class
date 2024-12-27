@@ -14,7 +14,6 @@ const JavaCodeModal = ({ getDiagramInstance, setGeneratedCode, setIsModalOpen })
       console.error('Diagram instance not available');
       return;
     }
-
     try {
       let javaCode = '';
       let imports = '// Generated Java Classes\n\n';
@@ -28,7 +27,7 @@ const JavaCodeModal = ({ getDiagramInstance, setGeneratedCode, setIsModalOpen })
 
       // Debug: Log all links to see their properties
       console.log('All Links:', diagram.model.linkDataArray);
-
+     
       diagram.model.linkDataArray.forEach(link => {
         const sourceNode = diagram.model.findNodeDataForKey(link.from);
         const targetNode = diagram.model.findNodeDataForKey(link.to);

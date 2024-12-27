@@ -3,6 +3,8 @@ import Diagram from "../components/Diagram";
 import ClassEditor from "../components/ClassEditor";
 import AssociationModal from "../components/AssociationModal";
 import JavaCodeModal from "../components/JavaCodeModal";
+import PHPCodeModal from "../components/PHPCodeModal";
+import PythonCodeModal from "../components/PythonCodeModal";
 
 const ClassDiagramPage = () => {
   // Initialize state from localStorage or use default values
@@ -185,6 +187,8 @@ const ClassDiagramPage = () => {
         const isDuplicateUpdate = otherMethods.some(
           method => 
             method.name === data.method.name && 
+
+            
             method.returnType === data.method.returnType &&
             JSON.stringify(method.args) === JSON.stringify(data.method.args)
         );
@@ -311,6 +315,16 @@ const ClassDiagramPage = () => {
               Clear Diagram
             </button>
             <JavaCodeModal 
+              getDiagramInstance={getDiagramInstance}
+              setGeneratedCode={setGeneratedCode}
+              setIsModalOpen={setIsJavaModalOpen}
+            />
+            <PHPCodeModal 
+              getDiagramInstance={getDiagramInstance}
+              setGeneratedCode={setGeneratedCode}
+              setIsModalOpen={setIsJavaModalOpen}
+            />
+            <PythonCodeModal 
               getDiagramInstance={getDiagramInstance}
               setGeneratedCode={setGeneratedCode}
               setIsModalOpen={setIsJavaModalOpen}
